@@ -11,13 +11,18 @@ import json
 import os
 
 import joblib
+import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.inspection import permutation_importance
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from sklearn.model_selection import GridSearchCV, TunedThresholdClassifierCV
 
 from churn.config import (
-    ARTIFACTS_DIR, COEFFICIENTS_PATH, IMPORTANCE_PATH, METRICS_PATH, MODELS_DIR, RESULTS_PATH, SEED,
+    ARTIFACTS_DIR, COEFFICIENTS_PATH, CONFUSION_DIR, IMPORTANCE_PATH, METRICS_PATH, MODELS_DIR, RESULTS_PATH, SEED,
     TEST_PREDICTIONS_PATH, model_path,
 )
 from churn.data import FEATURES, clean_data, load_data, split_data
@@ -37,6 +42,15 @@ def _logreg_coefficients(model):
     return pd.DataFrame({"feature": names, "coefficient": coefs}).sort_values("coefficient", ascending=False)
 
 
+def _save_confusion_png(cm, title, path):
+    disp = ConfusionMatrixDisplay(np.asarray(cm, dtype=int), display_labels=["No churn", "Churn"])
+    disp.plot(cmap="Blues", colorbar=False, values_format="d")
+    plt.title(title, fontsize=11)
+    plt.tight_layout()
+    plt.savefig(path, dpi=110)
+    plt.close()
+
+
 def train(metric="average_precision", threshold_metric="f1", drop_duplicates=False, configs=None,
           models=None, verbose=True):
     if metric not in SCORERS:
@@ -45,6 +59,7 @@ def train(metric="average_precision", threshold_metric="f1", drop_duplicates=Fal
         raise ValueError(f"threshold_metric must be one of {list(THRESHOLD_SCORERS)}")
     log = print if verbose else (lambda *a, **k: None)
     os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(CONFUSION_DIR, exist_ok=True)
 
     # 1. Stateless cleaning, then split: the test set is not used until step 4
     X, y = clean_data(load_data(), drop_duplicates=drop_duplicates)
@@ -83,6 +98,12 @@ def train(metric="average_precision", threshold_metric="f1", drop_duplicates=Fal
         }
         predictions[name] = proba
         joblib.dump(model, model_path(name), compress=3)
+        row = results[results["model"] == name].iloc[0]
+        _save_confusion_png([[row.tn, row.fp], [row.fn, row.tp]], f"{name.replace('_', ' ').title()} - cross-validation (threshold 0.5)",
+                            os.path.join(CONFUSION_DIR, f"cv_{name}.png"))
+        _save_confusion_png(summary[name]["confusion_matrix"],
+                            f"{name.replace('_', ' ').title()} - test set (threshold {model.best_threshold_:.2f})",
+                            os.path.join(CONFUSION_DIR, f"test_{name}.png"))
 
         # Model-agnostic importance of each original feature (drop in PR-AUC when it is shuffled)
         imp = permutation_importance(model, X_test, y_test, scoring="average_precision",

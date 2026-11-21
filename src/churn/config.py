@@ -12,6 +12,7 @@ METRICS_PATH = os.path.join(ARTIFACTS_DIR, "metrics.json")
 TEST_PREDICTIONS_PATH = os.path.join(ARTIFACTS_DIR, "test_predictions.csv")
 IMPORTANCE_PATH = os.path.join(ARTIFACTS_DIR, "feature_importance.csv")
 COEFFICIENTS_PATH = os.path.join(ARTIFACTS_DIR, "logreg_coefficients.csv")
+CONFUSION_DIR = os.path.join(ARTIFACTS_DIR, "confusion_matrices")
 
 
 def model_path(name):

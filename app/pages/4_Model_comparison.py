@@ -6,7 +6,8 @@ from churn.data import clean_data, load_data, split_data
 from churn.evaluation import cross_validate_config, make_cv
 from churn.pipeline import IMBALANCE, IMPUTERS, MODELS, SCALERS, TRANSFORMS, build_pipeline
 from common import (
-    CHURN_COLORS, MODEL_NAMES, METRICS, cv_results, draw, finding, header, metric_name, metrics, model_scale,
+    CHURN_COLORS, MODEL_NAMES, METRICS, confusion_chart, confusion_grid, cv_results, draw, finding, header, highlight,
+    metric_name, metrics,
     require_artifacts, setup_page, show_code,
 )
 from i18n import t
@@ -27,6 +28,13 @@ STRINGS = {
         "metric": "Rank by", "baseline": "Baseline (always predicts \"no churn\"): {name} = {v:.3f}",
         "best_per_model": "Best combination of each model ({metric}, mean ± std over the 5 folds)",
         "table": "All combinations",
+        "cm_title": "Confusion matrices in cross-validation (threshold 0.5)",
+        "cm_text": (
+            "Each customer of the training set is predicted by the model of the fold where it was held out, so every "
+            "matrix covers the {n:,} training customers. Best combination of each model for {metric}:"
+        ),
+        "cm_pick": "Confusion matrix of any combination", "cm_combo": "Combination",
+        "cm_note": "These matrices use the default threshold of 0.5; the final models use a tuned threshold (see *Final evaluation*).",
         "imbalance_title": "Effect of the class imbalance strategy",
         "imbalance_sub": "Mean over all combinations using each strategy",
         "imbalance_comment": (
@@ -72,6 +80,13 @@ STRINGS = {
         "metric": "Classer par", "baseline": "Baseline (prédit toujours « pas de churn ») : {name} = {v:.3f}",
         "best_per_model": "Meilleure combinaison de chaque modèle ({metric}, moyenne ± écart-type sur les 5 folds)",
         "table": "Toutes les combinaisons",
+        "cm_title": "Matrices de confusion en validation croisée (seuil 0,5)",
+        "cm_text": (
+            "Chaque client du jeu d'entraînement est prédit par le modèle du fold où il a été mis de côté : chaque "
+            "matrice couvre donc les {n:,} clients d'entraînement. Meilleure combinaison de chaque modèle pour {metric} :"
+        ),
+        "cm_pick": "Matrice de confusion de n'importe quelle combinaison", "cm_combo": "Combinaison",
+        "cm_note": "Ces matrices utilisent le seuil par défaut de 0,5 ; les modèles finaux utilisent un seuil réglé (voir *Évaluation finale*).",
         "imbalance_title": "Effet de la stratégie de déséquilibre",
         "imbalance_sub": "Moyenne sur toutes les combinaisons utilisant chaque stratégie",
         "imbalance_comment": (
@@ -126,12 +141,36 @@ best["combination"] = best[["imputer", "transform", "scaler", "imbalance"]].agg(
 base = alt.Chart(best).encode(y=alt.Y("model_name:N", sort=None, title=None))
 bars = base.mark_bar(cornerRadiusEnd=4, size=26).encode(
     x=alt.X(f"{metric}:Q", title=metric_name(metric), scale=alt.Scale(zero=False, padding=20)),
-    color=alt.Color("model_name:N", scale=model_scale(), legend=None),
+    color=highlight("model", best.iloc[0]["model"]),
     tooltip=[alt.Tooltip("model_name:N", title=t(STRINGS, "model")), alt.Tooltip("combination:N"),
              alt.Tooltip(f"{metric}:Q", format=".3f"), alt.Tooltip(f"{metric}_std:Q", format=".3f", title="std")])
 errors = base.mark_rule(color="#52514e").encode(x="low:Q", x2="high:Q")
 labels = base.mark_text(align="left", dx=6, color="#0b0b0b").encode(x="high:Q", text=alt.Text(f"{metric}:Q", format=".3f"))
 draw(bars + errors + labels, 220)
+
+# ── Confusion matrices (cross-validation) ───────────────────────────────────
+def caption(row):
+    return (f"{metric_name('recall')} {row.tp / (row.tp + row.fn):.0%} · {metric_name('precision')} "
+            f"{row.tp / (row.tp + row.fp):.0%} · {row.imputer} · {row.transform} · {row.scaler} · {row.imbalance}")
+
+
+st.subheader(t(STRINGS, "cm_title"))
+st.markdown(t(STRINGS, "cm_text", n=m["n_train"], metric=metric_name(metric)))
+confusion_grid([(r.model_name, (r.tn, r.fp, r.fn, r.tp), caption(r)) for r in best.itertuples()])
+st.caption(t(STRINGS, "cm_note"))
+
+st.markdown(f"**{t(STRINGS, 'cm_pick')}**")
+ranked = results.sort_values(metric, ascending=False).reset_index(drop=True)
+labels = [f"{r.model_name} · {r.imputer} · {r.transform} · {r.scaler} · {r.imbalance}  ({metric_name(metric)} {getattr(r, metric):.3f})"
+          for r in ranked.itertuples()]
+pick = st.selectbox(t(STRINGS, "cm_combo"), range(len(ranked)), format_func=labels.__getitem__)
+row = ranked.iloc[pick]
+left, right = st.columns([1, 1.5], gap="large")
+with left:
+    confusion_chart(row.tn, row.fp, row.fn, row.tp, 240)
+with right:
+    st.dataframe(pd.DataFrame([{metric_name(k): f"{row[k]:.3f} ± {row[k + '_std']:.3f}" for k in METRICS}]).T
+                 .rename(columns={0: "CV"}))
 
 # ── All combinations ────────────────────────────────────────────────────────
 st.subheader(t(STRINGS, "table"))

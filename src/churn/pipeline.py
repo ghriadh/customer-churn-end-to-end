@@ -13,7 +13,8 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import AdaBoostClassifier, HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, SGDClassifier
 from sklearn.preprocessing import (
     FunctionTransformer, MinMaxScaler, OneHotEncoder, PowerTransformer, RobustScaler, StandardScaler,
 )
@@ -30,6 +31,10 @@ IMBALANCE = ["none", "class_weight", "over", "under", "smote"]
 # name -> (factory taking class_weight, is_linear, supports class_weight)
 MODELS = {
     "logistic_regression": (lambda cw: LogisticRegression(max_iter=2000, class_weight=cw, random_state=SEED), True, True),
+    # RidgeClassifier has no predict_proba: calibration turns its scores into probabilities
+    "ridge": (lambda cw: CalibratedClassifierCV(RidgeClassifier(class_weight=cw), cv=3), True, True),
+    # log_loss = logistic regression trained by stochastic gradient descent (gives probabilities)
+    "sgd": (lambda cw: SGDClassifier(loss="log_loss", class_weight=cw, random_state=SEED), True, True),
     "random_forest": (lambda cw: RandomForestClassifier(n_estimators=300, class_weight=cw, n_jobs=-1, random_state=SEED), False, True),
     "hist_gradient_boosting": (lambda cw: HistGradientBoostingClassifier(class_weight=cw, random_state=SEED), False, True),
     "adaboost": (lambda cw: AdaBoostClassifier(random_state=SEED), False, False),
@@ -38,6 +43,8 @@ MODELS = {
 # Small hyperparameter grids, used to tune the best configuration found
 PARAM_GRIDS = {
     "logistic_regression": {"model__C": [0.01, 0.1, 1, 10, 50]},
+    "ridge": {"model__estimator__alpha": [0.1, 1, 10, 100]},
+    "sgd": {"model__alpha": [1e-4, 1e-3, 1e-2], "model__penalty": ["l2", "l1"]},
     "random_forest": {"model__max_depth": [None, 8, 12], "model__min_samples_leaf": [1, 5, 10]},
     "hist_gradient_boosting": {"model__learning_rate": [0.03, 0.1], "model__max_depth": [None, 3, 6], "model__l2_regularization": [0, 1]},
     "adaboost": {"model__learning_rate": [0.1, 0.5, 1.0], "model__n_estimators": [50, 200]},

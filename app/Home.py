@@ -8,7 +8,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Customer Churn", page_icon="📉", layout="wide")
 
-from common import MODEL_NAMES, artifacts_ready, finding, header, kpis, metric_name, metrics, pct, setup_page  # noqa: E402
+from common import MODEL_NAMES, artifacts_ready, cv_results, finding, header, kpis, metric_name, metrics, pct, setup_page  # noqa: E402
 from i18n import render_lang_toggle, t  # noqa: E402
 
 render_lang_toggle()
@@ -49,7 +49,7 @@ STRINGS = {
             "1. **Data**: the raw dataset and its cleaning.\n"
             "2. **Exploration**: distributions, statistical tests and the links between each feature and churn.\n"
             "3. **Preparation**: every step of the pipeline and its options.\n"
-            "4. **Model comparison**: 35 combinations of methods and models compared with the same cross-validation.\n"
+            "4. **Model comparison**: {n} combinations of preparation methods and models compared with the same cross-validation.\n"
             "5. **Final evaluation**: results on the test set, decision threshold, feature importance and recommendations.\n"
             "6. **Prediction**: estimate the churn risk of a new customer."
         ),
@@ -89,7 +89,7 @@ STRINGS = {
             "1. **Données** : le jeu de données brut et son nettoyage.\n"
             "2. **Exploration** : distributions, tests statistiques et lien entre chaque variable et le churn.\n"
             "3. **Préparation** : chaque étape du pipeline et ses options.\n"
-            "4. **Comparaison des modèles** : 35 combinaisons de méthodes et de modèles comparées avec la même validation croisée.\n"
+            "4. **Comparaison des modèles** : {n} combinaisons de méthodes de préparation et de modèles comparées avec la même validation croisée.\n"
             "5. **Évaluation finale** : résultats sur le jeu de test, seuil de décision, importance des variables et recommandations.\n"
             "6. **Prédiction** : estimer le risque de churn d'un nouveau client."
         ),
@@ -128,7 +128,7 @@ def home():
         finding(t(STRINGS, "insights"))
     with right:
         st.subheader(t(STRINGS, "tour_title"))
-        st.markdown(t(STRINGS, "tour"))
+        st.markdown(t(STRINGS, "tour", n=len(cv_results()) if artifacts_ready() else "~80"))
 
 
 pages = Path(__file__).parent / "pages"

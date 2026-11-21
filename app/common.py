@@ -15,17 +15,14 @@ from i18n import get_lang, t
 
 # ── Palette (validated for colour-vision deficiencies) ──────────────────────
 CHURN_COLORS = {"No": "#2a78d6", "Yes": "#eb6834"}
-MODEL_COLORS = {
-    "logistic_regression": "#2a78d6",
-    "random_forest": "#eb6834",
-    "hist_gradient_boosting": "#1baf7a",
-    "adaboost": "#eda100",
-}
+HIGHLIGHT = "#2a78d6"   # the model in focus; other models are drawn in NEUTRAL (6 hues would not stay distinguishable)
 NEUTRAL = "#a3a29c"
 TEXT, TEXT_2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e6e5e1", "#fcfcfb"
 
 MODEL_NAMES = {
     "logistic_regression": "Logistic Regression",
+    "ridge": "Ridge Classifier",
+    "sgd": "SGD Classifier",
     "random_forest": "Random Forest",
     "hist_gradient_boosting": "Gradient Boosting (hist)",
     "adaboost": "AdaBoost",
@@ -43,11 +40,15 @@ COMMON = {
         "no_artifacts": "No trained models found. Run `python run_pipeline.py` from the project root, then reload.",
         "code": "Show the code",
         "churn": "Churn", "no_churn": "No churn", "count": "Customers", "share": "Share",
+        "actual": "Actual", "predicted": "Predicted",
+        "cell_tn": "Correctly left alone", "cell_fp": "False alarm", "cell_fn": "Missed churner", "cell_tp": "Caught churner",
     },
     "fr": {
         "no_artifacts": "Aucun modèle entraîné. Lancez `python run_pipeline.py` depuis la racine du projet, puis rechargez.",
         "code": "Voir le code",
         "churn": "Churn", "no_churn": "Pas de churn", "count": "Clients", "share": "Part",
+        "actual": "Réel", "predicted": "Prédit",
+        "cell_tn": "À juste titre non signalé", "cell_fp": "Fausse alerte", "cell_fn": "Churner manqué", "cell_tp": "Churner détecté",
     },
 }
 
@@ -182,9 +183,36 @@ def churn_scale():
     return alt.Scale(domain=["No", "Yes"], range=[CHURN_COLORS["No"], CHURN_COLORS["Yes"]])
 
 
-def model_scale(names=None):
-    names = names or list(MODEL_COLORS)
-    return alt.Scale(domain=[MODEL_NAMES[n] for n in names], range=[MODEL_COLORS[n] for n in names])
+def highlight(field, value):
+    """Colour the mark whose `field` equals `value`, grey for the others."""
+    return alt.condition(alt.datum[field] == value, alt.value(HIGHLIGHT), alt.value(NEUTRAL))
+
+
+def confusion_chart(tn, fp, fn, tp, height=240):
+    """Confusion matrix as a heatmap, with plain-language names for the four cells in the tooltip."""
+    labels = ["No", "Yes"]
+    actual, predicted = t(COMMON, "actual"), t(COMMON, "predicted")
+    cells = [("No", "No", tn, "cell_tn"), ("No", "Yes", fp, "cell_fp"), ("Yes", "No", fn, "cell_fn"), ("Yes", "Yes", tp, "cell_tp")]
+    cm = pd.DataFrame([(a, p, int(v), t(COMMON, k)) for a, p, v, k in cells], columns=[actual, predicted, "n", "group"])
+    heat = alt.Chart(cm).mark_rect(cornerRadius=4, stroke=SURFACE, strokeWidth=2).encode(
+        x=alt.X(f"{predicted}:N", sort=labels, axis=alt.Axis(labelAngle=0, orient="top")),
+        y=alt.Y(f"{actual}:N", sort=labels),
+        color=alt.Color("n:Q", scale=alt.Scale(range=["#cde2fb", "#184f95"]), legend=None),
+        tooltip=["group", actual, predicted, "n"])
+    text = heat.mark_text(fontSize=18, fontWeight=600).encode(
+        text="n:Q", color=alt.condition(f"datum.n > {max(tn, fp, fn, tp) / 2}", alt.value("#ffffff"), alt.value(TEXT)))
+    draw(heat + text, height)
+
+
+def confusion_grid(items, per_row=3, height=190):
+    """items: list of (title, (tn, fp, fn, tp), caption)."""
+    for start in range(0, len(items), per_row):
+        cols = st.columns(per_row, gap="medium")
+        for col, (title, (tn, fp, fn, tp), caption) in zip(cols, items[start:start + per_row]):
+            with col:
+                st.markdown(f"**{title}**")
+                confusion_chart(tn, fp, fn, tp, height)
+                st.caption(caption)
 
 
 def draw(chart, height=320):

@@ -1,8 +1,9 @@
 """Metrics, cross-validated comparison of configurations, and final test evaluation."""
+import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import (
-    accuracy_score, average_precision_score, f1_score, fbeta_score, make_scorer,
+    accuracy_score, average_precision_score, confusion_matrix, f1_score, fbeta_score, make_scorer,
     precision_score, recall_score, roc_auc_score, balanced_accuracy_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
@@ -33,8 +34,14 @@ def make_cv(n_splits=5):
 
 
 def cross_validate_config(estimator, X, y, cv):
-    scores = cross_validate(estimator, X, y, cv=cv, scoring=SCORERS, n_jobs=-1)
-    row = {}
+    scores = cross_validate(estimator, X, y, cv=cv, scoring=SCORERS, n_jobs=-1,
+                            return_estimator=True, return_indices=True)
+    # Out-of-fold confusion matrix (threshold 0.5): each customer is predicted by the
+    # model of the fold where it was in the validation part
+    cm = np.zeros((2, 2), dtype=int)
+    for est, idx in zip(scores["estimator"], scores["indices"]["test"]):
+        cm += confusion_matrix(y.iloc[idx], est.predict(X.iloc[idx]), labels=[0, 1])
+    row = {"tn": int(cm[0, 0]), "fp": int(cm[0, 1]), "fn": int(cm[1, 0]), "tp": int(cm[1, 1])}
     for name in SCORERS:
         row[name] = scores[f"test_{name}"].mean()
         row[f"{name}_std"] = scores[f"test_{name}"].std()

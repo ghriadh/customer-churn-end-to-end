@@ -6,8 +6,8 @@ from sklearn.metrics import confusion_matrix, precision_recall_curve
 
 from churn.evaluation import test_metrics
 from common import (
-    CHURN_COLORS, MODEL_COLORS, MODEL_NAMES, METRICS, NEUTRAL, coefficients, draw, eda_data, finding, header,
-    importances, kpis, metric_name, metrics, model_scale, pct, require_artifacts, setup_page, show_code,
+    CHURN_COLORS, HIGHLIGHT, MODEL_NAMES, METRICS, NEUTRAL, coefficients, confusion_chart, confusion_grid, draw,
+    eda_data, finding, header, importances, kpis, metric_name, metrics, pct, require_artifacts, setup_page, show_code,
     test_predictions,
 )
 from i18n import t
@@ -31,6 +31,11 @@ STRINGS = {
         ),
         "threshold": "Threshold",
         "cm_title": "Confusion matrix", "actual": "Actual", "predicted": "Predicted",
+        "cm_all_title": "Confusion matrices of the final models (test set, tuned threshold)",
+        "cm_all_text": (
+            "Each matrix splits the {n:,} test customers into four groups: **caught churners** (bottom right), "
+            "**missed churners** (bottom left), **false alarms** (top right) and customers **correctly left alone** (top left)."
+        ),
         "cm_text": (
             "With this threshold, the model detects **{tp}** of the **{pos}** churners ({rec}) and raises **{fp}** "
             "false alarms. **{fn}** churners are missed."
@@ -41,7 +46,7 @@ STRINGS = {
             "threshold raises recall to **{rt}** with a moderate loss of precision ({p05} → {pt}). For a retention "
             "campaign, missing a churner usually costs more than contacting a customer who would have stayed."
         ),
-        "curves_title": "Precision-recall curves of the four models",
+        "curves_title": "Precision-recall curves of the final models (selected model highlighted)",
         "importance_title": "Which features matter",
         "importance_text": (
             "Permutation importance: drop in PR-AUC on the test set when the values of a feature are shuffled. "
@@ -83,6 +88,12 @@ STRINGS = {
         ),
         "threshold": "Seuil",
         "cm_title": "Matrice de confusion", "actual": "Réel", "predicted": "Prédit",
+        "cm_all_title": "Matrices de confusion des modèles finaux (jeu de test, seuil réglé)",
+        "cm_all_text": (
+            "Chaque matrice répartit les {n:,} clients du test en quatre groupes : **churners détectés** (en bas à "
+            "droite), **churners manqués** (en bas à gauche), **fausses alertes** (en haut à droite) et clients "
+            "**à juste titre non signalés** (en haut à gauche)."
+        ),
         "cm_text": (
             "Avec ce seuil, le modèle détecte **{tp}** des **{pos}** churners ({rec}) et déclenche **{fp}** fausses "
             "alertes. **{fn}** churners ne sont pas détectés."
@@ -94,7 +105,7 @@ STRINGS = {
             "campagne de fidélisation, rater un churner coûte en général plus cher que contacter un client qui "
             "serait resté."
         ),
-        "curves_title": "Courbes précision-rappel des quatre modèles",
+        "curves_title": "Courbes précision-rappel des modèles finaux (modèle choisi en couleur)",
         "importance_title": "Quelles variables comptent",
         "importance_text": (
             "Importance par permutation : baisse de la PR-AUC sur le jeu de test quand les valeurs d'une variable "
@@ -147,6 +158,17 @@ st.dataframe(pd.DataFrame([{"model": MODEL_NAMES[n], **{metric_name(k): round(s[
                             t(STRINGS, "threshold"): round(s["threshold"], 2)} for n, s in m["models"].items()]),
              hide_index=True)
 
+
+st.subheader(t(STRINGS, "cm_all_title"))
+st.markdown(t(STRINGS, "cm_all_text", n=m["n_test"]))
+items = []
+for n in names:
+    (a, b), (c, d) = m["models"][n]["confusion_matrix"]
+    items.append((MODEL_NAMES[n], (a, b, c, d),
+                  f"{metric_name('recall')} {pct(d / (c + d), 0)} · {metric_name('precision')} {pct(d / (b + d), 0)} · "
+                  f"{t(STRINGS, 'threshold')} {m['models'][n]['threshold']:.2f}"))
+confusion_grid(items)
+
 # ── Threshold ───────────────────────────────────────────────────────────────
 st.subheader(t(STRINGS, "threshold_title"))
 st.markdown(t(STRINGS, "threshold_text", thr=info["threshold"]))
@@ -158,17 +180,7 @@ tn, fp, fn, tp = confusion_matrix(y_true, pred).ravel()
 left, right = st.columns([1, 1.4], gap="large")
 with left:
     st.markdown(f"**{t(STRINGS, 'cm_title')}**")
-    labels = ["No", "Yes"]
-    cm = pd.DataFrame([(a, p, v) for (a, p), v in zip([(x, y) for x in labels for y in labels], [tn, fp, fn, tp])],
-                      columns=[t(STRINGS, "actual"), t(STRINGS, "predicted"), "n"])
-    heat = alt.Chart(cm).mark_rect(cornerRadius=4, stroke="#fcfcfb", strokeWidth=2).encode(
-        x=alt.X(f"{t(STRINGS, 'predicted')}:N", sort=labels, axis=alt.Axis(labelAngle=0, orient="top")),
-        y=alt.Y(f"{t(STRINGS, 'actual')}:N", sort=labels),
-        color=alt.Color("n:Q", scale=alt.Scale(range=["#cde2fb", "#184f95"]), legend=None),
-        tooltip=[t(STRINGS, "actual"), t(STRINGS, "predicted"), "n"])
-    text = heat.mark_text(fontSize=20, fontWeight=600).encode(
-        text="n:Q", color=alt.condition("datum.n > 500", alt.value("#ffffff"), alt.value("#0b0b0b")))
-    draw(heat + text, 260)
+    confusion_chart(tn, fp, fn, tp, 260)
     st.markdown(t(STRINGS, "cm_text", tp=tp, pos=tp + fn, rec=pct(tp / (tp + fn), 0), fp=fp, fn=fn))
 with right:
     st.markdown(f"**{t(STRINGS, 'pr_title')}**")
@@ -199,7 +211,9 @@ for n in names:
     rows.append(pd.DataFrame({"recall": r[::step], "precision": p[::step], "model": MODEL_NAMES[n]}))
 draw(alt.Chart(pd.concat(rows)).mark_line(strokeWidth=2).encode(
     x=alt.X("recall:Q", title=metric_name("recall")), y=alt.Y("precision:Q", title=metric_name("precision"), scale=alt.Scale(domain=[0, 1])),
-    color=alt.Color("model:N", scale=model_scale(names), title=None), order="recall:Q",
+    color=alt.condition(alt.datum.model == MODEL_NAMES[name], alt.value(HIGHLIGHT), alt.value(NEUTRAL)),
+    strokeWidth=alt.condition(alt.datum.model == MODEL_NAMES[name], alt.value(3), alt.value(1.2)),
+    detail="model:N", order="recall:Q",
     tooltip=["model", alt.Tooltip("recall:Q", format=".2f"), alt.Tooltip("precision:Q", format=".2f")]), 320)
 
 # ── Importance ──────────────────────────────────────────────────────────────
@@ -209,7 +223,7 @@ imp = importances()
 imp = imp[imp.model == name].sort_values("importance", ascending=False)
 imp["low"], imp["high"] = imp.importance - imp["std"], imp.importance + imp["std"]
 base_chart = alt.Chart(imp).encode(y=alt.Y("feature:N", sort=None, title=None))
-draw(base_chart.mark_bar(cornerRadiusEnd=4, color=MODEL_COLORS[name], size=14).encode(
+draw(base_chart.mark_bar(cornerRadiusEnd=4, color=HIGHLIGHT, size=14).encode(
     x=alt.X("importance:Q", title=t(STRINGS, "drop")),
     tooltip=["feature", alt.Tooltip("importance:Q", format=".4f"), alt.Tooltip("std:Q", format=".4f")])
      + base_chart.mark_rule(color="#52514e").encode(x="low:Q", x2="high:Q"), 460)

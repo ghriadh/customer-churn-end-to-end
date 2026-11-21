@@ -4,7 +4,7 @@ import streamlit as st
 
 from churn.prediction import predict
 from common import (
-    MODEL_NAMES, draw, finding, header, metrics, model, model_scale, pct, require_artifacts, setup_page, show_code,
+    MODEL_NAMES, draw, finding, header, highlight, metrics, model, pct, require_artifacts, setup_page, show_code,
 )
 from i18n import t
 
@@ -96,7 +96,7 @@ with right:
     bars = alt.Chart(results).mark_bar(cornerRadiusEnd=4, size=22).encode(
         y=alt.Y("model:N", title=None, sort=None),
         x=alt.X("probability:Q", title=t(STRINGS, "probability"), scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format="%")),
-        color=alt.Color("model:N", scale=model_scale(names), legend=None),
+        color=highlight("name", sel),
         tooltip=["model", alt.Tooltip("probability:Q", format=".1%"), alt.Tooltip("threshold:Q", format=".2f")])
     ticks = alt.Chart(results).mark_tick(color="#0b0b0b", thickness=2, size=30).encode(y=alt.Y("model:N", sort=None), x="threshold:Q")
     rule = alt.Chart(pd.DataFrame({"x": [m["churn_rate"]]})).mark_rule(color="#a3a29c", strokeDash=[4, 4]).encode(x="x:Q")
