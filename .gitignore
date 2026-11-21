@@ -1,0 +1,26 @@
+# Environments
+venv/
+.venv/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated outputs
+logs/
+catboost_info/
+mlruns/
+artifacts*/
+
+# Unrelated NLP experiments (large data, kept outside this repo)
+src3/nlp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

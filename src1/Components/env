@@ -1,0 +1,6 @@
+# create and activate environement
+conda create -p venv python==3.9 -y
+conda activate venv/
+
+# install packages 
+pip install -r requirements.txt
