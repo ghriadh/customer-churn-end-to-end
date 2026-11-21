@@ -1,6 +1,8 @@
-os
-sys
-numpy
 pandas
-sklearn
+numpy
+scipy
+scikit-learn
+matplotlib
+seaborn
+streamlit
 -e .
