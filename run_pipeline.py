@@ -1,65 +1,47 @@
-import os
-from churn.config import DATA_PATH
-import pandas as pd
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from churn.data_injection import DataIngestion
-from churn.data_transform import TransformDataPipe
-from churn.split_data import SplitData
-from churn.training import Training
-from churn.prediction import Prediction
-        
-if __name__=="__main__":
-    
-    src_path = DATA_PATH
-    id = 'customerID'
-    class_imbalance_deal = 'No'
-    missing_value_deal = 'del'
-    transformer = 'log'
-    scaler = StandardScaler()
-    target = 'Churn'
-    rate = 0.6
+"""Train the churn model from the command line.
 
-    instance=DataIngestion(src_path,id, missing_value_deal,class_imbalance_deal )
-    data_path=instance.deal_data_pipeline()
+Examples:
+    python run_pipeline.py
+    python run_pipeline.py --metric f1 --threshold-metric f2
+    python run_pipeline.py --quick
+"""
+import argparse
 
-    instance = TransformDataPipe(data_path, transformer, scaler)
-    data_path = instance.transform_data_pipeline()
+from churn.evaluation import SCORERS, THRESHOLD_SCORERS
+from churn.pipeline import experiment_configs
+from churn.prediction import predict
+from churn.train import train
 
-    df = pd.read_csv(data_path)
-    instance = SplitData(target, rate)
-    data_dirname = instance.transform(df)
 
-    instance = Training(data_dirname)
-    instance.train()
+def main():
+    parser = argparse.ArgumentParser(description="Customer churn training pipeline")
+    parser.add_argument("--metric", default="average_precision", choices=list(SCORERS),
+                        help="metric used to choose the best configuration (default: PR-AUC)")
+    parser.add_argument("--threshold-metric", default="f1", choices=list(THRESHOLD_SCORERS),
+                        help="metric maximized when tuning the decision threshold")
+    parser.add_argument("--drop-duplicates", action="store_true",
+                        help="drop rows identical on every feature (22 rows)")
+    parser.add_argument("--quick", action="store_true", help="small grid, for a fast check")
+    args = parser.parse_args()
 
-    gender = 'Female'
-    SeniorCitizen = 1
-    Partner = 'No'
-    Dependents = 'No'
-    tenure = 4
-    PhoneService = 'Yes'
-    MultipleLines = 'No'
+    configs = None
+    if args.quick:
+        configs = experiment_configs(models=["logistic_regression", "hist_gradient_boosting"],
+                                     transforms=("log",), scalers=("standard",),
+                                     imbalance=("none", "class_weight"))
+    train(metric=args.metric, threshold_metric=args.threshold_metric,
+          drop_duplicates=args.drop_duplicates, configs=configs)
 
-    InternetService = 'No'
-    OnlineSecurity = 'No'
-    OnlineBackup = 'No'
-    DeviceProtection = 'No'
-    TechSupport = 'No'
-    StreamingTV = 'No'
+    example = {
+        "gender": "Female", "SeniorCitizen": 1, "Partner": "No", "Dependents": "No", "tenure": 4,
+        "PhoneService": "Yes", "MultipleLines": "No", "InternetService": "Fiber optic",
+        "OnlineSecurity": "No", "OnlineBackup": "No", "DeviceProtection": "No", "TechSupport": "No",
+        "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Month-to-month",
+        "PaperlessBilling": "Yes", "PaymentMethod": "Electronic check",
+        "MonthlyCharges": 75.0, "TotalCharges": 300.0,
+    }
+    print("example prediction:", predict([example]).iloc[0].to_dict())
 
-    StreamingMovies = 'No'
-    Contract = 'Month-to-month'
-    PaperlessBilling = 'No'
-    PaymentMethod = 'Credit card (automatic)'
-    MonthlyCharges = 20
-    TotalCharges = 60
-    
-    
-    instance = Prediction(
-        gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService,  MultipleLines, InternetService, 
-        OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport, StreamingTV, StreamingMovies, 
-        Contract, PaperlessBilling, PaymentMethod, MonthlyCharges, TotalCharges
-    )
-    new_data = instance.get_new_data()
-    preds = instance.predict()
-    print(preds[0])
+
+if __name__ == "__main__":
+    main()
