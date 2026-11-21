@@ -1,13 +1,20 @@
-"""Predict churn for new customers with the saved model (preparation pipeline + model + threshold)."""
+"""Predict churn for new customers with a saved model (preparation pipeline + model + tuned threshold)."""
+import json
+
 import joblib
 import pandas as pd
 
-from churn.config import MODEL_PATH
+from churn.config import METRICS_PATH, model_path
 from churn.data import prepare_features
 
 
-def load_model(path=MODEL_PATH):
-    return joblib.load(path)
+def selected_model_name():
+    with open(METRICS_PATH, encoding="utf-8") as f:
+        return json.load(f)["selected_model"]
+
+
+def load_model(name=None):
+    return joblib.load(model_path(name or selected_model_name()))
 
 
 def predict(customers, model=None):

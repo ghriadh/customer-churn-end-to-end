@@ -29,8 +29,11 @@ def main():
         configs = experiment_configs(models=["logistic_regression", "hist_gradient_boosting"],
                                      transforms=("log",), scalers=("standard",),
                                      imbalance=("none", "class_weight"))
-    train(metric=args.metric, threshold_metric=args.threshold_metric,
-          drop_duplicates=args.drop_duplicates, configs=configs)
+    metrics = train(metric=args.metric, threshold_metric=args.threshold_metric,
+                    drop_duplicates=args.drop_duplicates, configs=configs)
+    selected = metrics["selected_model"]
+    print("test metrics of the selected model:",
+          {k: round(v, 3) for k, v in metrics["models"][selected]["test"].items()})
 
     example = {
         "gender": "Female", "SeniorCitizen": 1, "Partner": "No", "Dependents": "No", "tenure": 4,

@@ -5,11 +5,16 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 DATA_PATH = os.path.join(ROOT_DIR, "data", "customer_churn.csv")
 ARTIFACTS_DIR = os.path.join(ROOT_DIR, "artifacts")
-APP_CSS_PATH = os.path.join(ROOT_DIR, "app", "style.css")
 
-MODEL_PATH = os.path.join(ARTIFACTS_DIR, "model.pkl")
+MODELS_DIR = os.path.join(ARTIFACTS_DIR, "models")
 RESULTS_PATH = os.path.join(ARTIFACTS_DIR, "cv_results.csv")
 METRICS_PATH = os.path.join(ARTIFACTS_DIR, "metrics.json")
-CONFUSION_MATRIX_PATH = os.path.join(ARTIFACTS_DIR, "confusion_matrix.png")
+TEST_PREDICTIONS_PATH = os.path.join(ARTIFACTS_DIR, "test_predictions.csv")
+IMPORTANCE_PATH = os.path.join(ARTIFACTS_DIR, "feature_importance.csv")
+COEFFICIENTS_PATH = os.path.join(ARTIFACTS_DIR, "logreg_coefficients.csv")
+
+
+def model_path(name):
+    return os.path.join(MODELS_DIR, f"{name}.pkl")
 
 SEED = 1234

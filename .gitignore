@@ -15,10 +15,8 @@ __pycache__/
 logs/
 catboost_info/
 mlruns/
-artifacts*/
+# artifacts/ is committed: the app needs the trained models
 
-# Unrelated NLP experiments (large data, kept outside this repo)
-src3/nlp/
 
 # OS / editor
 .DS_Store
