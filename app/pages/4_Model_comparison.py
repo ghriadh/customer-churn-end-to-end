@@ -166,7 +166,7 @@ pad = (hi - lo) * 0.15
 xscale = alt.Scale(domain=[lo - pad, hi + pad], zero=False)
 base = alt.Chart(best).encode(y=alt.Y("model_name:N", sort=None, title=None))
 color = alt.condition(alt.datum.model == best.iloc[0]["model"], alt.value(HIGHLIGHT), alt.value(NEUTRAL))
-errors = base.mark_rule(strokeWidth=3).encode(x=alt.X("low:Q", scale=xscale, title=metric_name(metric)), x2="high:Q", color=color)
+errors = base.mark_rule(strokeWidth=3).encode(x=alt.X("low:Q", scale=xscale, title=metric_name(metric), axis=alt.Axis(tickCount=6, format=".2f")), x2="high:Q", color=color)
 dots = base.mark_circle(size=260, opacity=1).encode(
     x=alt.X(f"{metric}:Q", scale=xscale), color=color,
     tooltip=[alt.Tooltip("model_name:N", title=t(STRINGS, "model")), alt.Tooltip("combination:N"),

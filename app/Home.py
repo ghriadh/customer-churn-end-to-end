@@ -20,7 +20,7 @@ setup_page()
 STRINGS = {
     "en": {
         "nav_home": "Home", "nav_data": "Data", "nav_eda": "Exploration", "nav_prep": "Preparation",
-        "nav_compare": "Model comparison", "nav_eval": "Results & recommendations", "nav_predict": "Try the model",
+        "nav_compare": "Model comparison", "nav_eval": "Results", "nav_predict": "Try the model",
         "section_analysis": "Analysis", "section_model": "Modelling",
         "eyebrow": "Machine learning project",
         "title": "Which customers are about to leave?",
@@ -72,7 +72,7 @@ STRINGS = {
     },
     "fr": {
         "nav_home": "Accueil", "nav_data": "Données", "nav_eda": "Exploration", "nav_prep": "Préparation",
-        "nav_compare": "Comparaison des modèles", "nav_eval": "Résultats et recommandations", "nav_predict": "Tester le modèle",
+        "nav_compare": "Comparaison des modèles", "nav_eval": "Résultats", "nav_predict": "Tester le modèle",
         "section_analysis": "Analyse", "section_model": "Modélisation",
         "eyebrow": "Projet de machine learning",
         "title": "Quels clients sont sur le point de partir ?",

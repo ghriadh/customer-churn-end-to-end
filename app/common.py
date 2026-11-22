@@ -1,4 +1,5 @@
 """Shared helpers for every page: styles, layout blocks, number formatting, cached loaders and charts."""
+import inspect
 import json
 import os
 
@@ -19,7 +20,7 @@ HIGHLIGHT = "#2a78d6"   # the model in focus; other models are drawn in NEUTRAL 
 NEUTRAL = "#b4b3ad"
 # Metric curves (recall / precision / F1): hues distinct from the churn colours, which mean classes
 METRIC_COLORS = ["#6250d6", "#1baf7a", "#eda100"]
-TEXT, TEXT_2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e6e5e1", "#ffffff"
+TEXT, TEXT_2, GRID, SURFACE = "#1a1a1a", "#3d3d3a", "#e6e5e1", "#ffffff"
 
 MODEL_NAMES = {
     "logistic_regression": "Logistic Regression",
@@ -87,7 +88,7 @@ h2, h3 { color: #0d366b !important; }
 .page-banner .eyebrow, .hero .eyebrow { font-size: .78rem; font-weight: 700; letter-spacing: .12em;
     text-transform: uppercase; color: #2a78d6; margin-bottom: 4px; }
 .page-banner h1 { margin: 0 !important; padding: 0 !important; font-size: 2.3rem !important; color: #0d366b !important; }
-.page-banner .caption { font-size: 1.06rem; color: #3a3a38; margin-top: 6px; }
+.page-banner .caption { font-size: 1.06rem; color: #3d3d3a; margin-top: 6px; }
 .hero { background: linear-gradient(120deg, #1c5cab 0%, #4a52c9 55%, #6250d6 100%); border-radius: 22px;
     padding: 34px 38px 30px; color: #fff; margin-bottom: 22px; box-shadow: 0 8px 24px rgba(28, 92, 171, .25); }
 .hero .eyebrow { color: #cde2fb; }
@@ -115,20 +116,28 @@ h2, h3 { color: #0d366b !important; }
 .kpi { background: #fff; border: 1px solid #e3e8f0; border-top: 5px solid #2a78d6; border-radius: 14px;
     padding: 14px 18px; height: 100%; box-shadow: 0 2px 8px rgba(16, 24, 40, .06); }
 .kpi.orange { border-top-color: #eb6834; } .kpi.green { border-top-color: #1baf7a; } .kpi.violet { border-top-color: #6250d6; }
-.kpi-label { font-size: .8rem; color: #52514e; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
-.kpi-value { font-size: 2.1rem; font-weight: 750; color: #0b0b0b; line-height: 1.25; }
-.kpi-sub { font-size: .92rem; color: #52514e; }
+.kpi-label { font-size: .8rem; color: #3d3d3a; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+.kpi-value { font-size: 2.1rem; font-weight: 750; color: #1a1a1a; line-height: 1.25; }
+.kpi-sub { font-size: .95rem; color: #3d3d3a; }
 
 /* Widgets: make every control stand out */
 [data-testid="stWidgetLabel"] p { font-weight: 650 !important; color: #0d366b !important; font-size: 1rem !important; }
-div[role="radiogroup"] { gap: 8px; flex-wrap: wrap; }
-div[role="radiogroup"] > label { border: 1.5px solid #9ec5f4; border-radius: 999px; padding: 4px 14px 4px 10px;
-    background: #fff; margin-right: 2px !important; cursor: pointer; transition: background .15s; }
-div[role="radiogroup"] > label:hover { background: #eaf2fd; }
-div[role="radiogroup"] > label:has(input:checked) { background: #2a78d6; border-color: #2a78d6; }
-div[role="radiogroup"] > label:has(input:checked) p { color: #fff !important; font-weight: 600; }
-[data-baseweb="select"] > div { border: 1.5px solid #6da7ec !important; background: #f5f9ff !important; border-radius: 10px !important; }
-[data-testid="stNumberInput"] input { background: #f5f9ff; }
+/* Radio buttons as pills (Streamlit 1.67: stRadioGroup / stRadioOption with react-aria data-selected) */
+[data-testid="stRadioGroup"] { gap: 8px !important; flex-wrap: wrap; }
+[data-testid="stRadioOption"] { border: 1.5px solid #86b6ef; border-radius: 999px; padding: 5px 16px 5px 10px !important;
+    background: #fff; margin-right: 4px !important; cursor: pointer; transition: background .15s, box-shadow .15s;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .08); }
+[data-testid="stRadioOption"][data-hovered] { background: #eaf2fd; }
+[data-testid="stRadioOption"][data-selected] { background: #2a78d6; border-color: #2a78d6; box-shadow: 0 2px 6px rgba(42, 120, 214, .35); }
+[data-testid="stRadioOption"][data-selected] p { color: #fff !important; font-weight: 650; }
+/* Toggles and checkboxes: bold label, darker track when off */
+[data-testid="stCheckbox"] p { font-weight: 600; color: #0d366b; }
+[data-testid="stCheckbox"]:not([data-selected]) > div > div:first-child { background-color: #a9b8cc !important; }
+/* Select boxes: tinted, bordered, value in bold */
+[data-baseweb="select"] > div { border: 1.5px solid #6da7ec !important; background: #eef5fe !important; border-radius: 10px !important; }
+[data-baseweb="select"] > div * { font-weight: 650; color: #0d366b; }
+[data-baseweb="select"] > div { font-size: 1.04rem; }
+[data-testid="stNumberInput"] input { background: #eef5fe; font-weight: 600; }
 .stButton > button, [data-testid="stFormSubmitButton"] > button { background: #2a78d6; color: #fff; border: none;
     font-weight: 650; padding: .55rem 1.4rem; border-radius: 10px; box-shadow: 0 2px 6px rgba(42, 120, 214, .35); }
 .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover { background: #1c5cab; color: #fff; }
@@ -139,22 +148,35 @@ div[role="radiogroup"] > label:has(input:checked) p { color: #fff !important; fo
     padding: 12px 18px 4px; }
 .ctl-title { font-weight: 800; color: #1c5cab; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; }
 
-/* Tabs */
-.stTabs [data-baseweb="tab-list"] { gap: 6px; }
-.stTabs [data-baseweb="tab"] { background: #eef3fa; border-radius: 10px 10px 0 0; padding: 8px 18px; }
-.stTabs [data-baseweb="tab"] p { font-size: 1.02rem; font-weight: 650; }
-.stTabs [aria-selected="true"] { background: #2a78d6; }
-.stTabs [aria-selected="true"] p { color: #fff; }
+/* Tabs: every tab looks like a button, the active one in solid blue */
+[data-testid="stTabs"] [role="tablist"] { gap: 8px; }
+[data-testid="stTab"] { background: #e3edfa !important; border-radius: 10px 10px 0 0; padding: 0 20px !important;
+    transition: background .15s; }
+[data-testid="stTab"]:hover { background: #cfe0f7 !important; }
+[data-testid="stTab"] p { font-size: 1.08rem !important; font-weight: 700 !important; color: #0d366b; }
+[data-testid="stTab"][aria-selected="true"] { background: #2a78d6 !important; }
+[data-testid="stTab"][aria-selected="true"] p { color: #fff !important; }
 
-/* Expanders ("Show the code", "Technical details") */
-[data-testid="stExpander"] details { border-radius: 12px; border: 1px solid #d5e2f3; background: #fbfcfe; }
-[data-testid="stExpander"] summary p { font-weight: 650; color: #1c5cab; }
+/* Expanders: raised and clearly clickable. "Show the code" = dark header, "Technical details" = violet */
+[data-testid="stExpander"] details { border-radius: 12px; border: 1px solid #c9d8ee; border-left: 6px solid #2a78d6;
+    background: #fff; box-shadow: 0 3px 10px rgba(16, 24, 40, .10); transition: box-shadow .15s, transform .15s; overflow: hidden; }
+[data-testid="stExpander"] details:hover { box-shadow: 0 6px 16px rgba(16, 24, 40, .18); transform: translateY(-1px); }
+[data-testid="stExpander"] summary { background: #eaf2fd; }
+[data-testid="stExpander"] summary p { font-weight: 700; color: #0d366b; font-size: 1.04rem; }
+[class*="st-key-xcode"] details { border-left-color: #0d366b; }
+[class*="st-key-xcode"] summary { background: #1d2b45; }
+[class*="st-key-xcode"] summary p, [class*="st-key-xcode"] summary svg { color: #fff !important; }
+[class*="st-key-xcode"] summary:hover { background: #2a3d60; }
+[class*="st-key-xtech"] details { border-left-color: #6250d6; border-color: #d9d3f6; }
+[class*="st-key-xtech"] summary { background: #efecfd; }
+[class*="st-key-xtech"] summary p, [class*="st-key-xtech"] summary svg { color: #3f31a8 !important; }
+[class*="st-key-xtech"] summary:hover { background: #e3defb; }
 
 /* Result column that stays visible while the form is scrolled (prediction page) */
 [data-testid="stHorizontalBlock"]:has(.sticky-anchor) { align-items: flex-start; }
 [data-testid="stColumn"]:has(.sticky-anchor) { position: sticky; top: 3.5rem; }
 
-[data-testid="stCaptionContainer"] p { font-size: .93rem; color: #46464a; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p { font-size: .95rem !important; color: #3d3d3a !important; }
 section[data-testid="stSidebar"] { background: linear-gradient(180deg, #eef4fd 0%, #f4f1ff 100%); }
 </style>
 """
@@ -204,14 +226,20 @@ def kpis(items):
                      unsafe_allow_html=True)
 
 
+def _caller_key(prefix):
+    """Stable, unique key from the calling page and line (gives the CSS class st-key-<key>)."""
+    frame = inspect.stack()[2]
+    return f"{prefix}_{os.path.basename(frame.filename).split('.')[0]}_{frame.lineno}"
+
+
 def show_code(code):
-    with st.expander(f"</> {t(COMMON, 'code')}"):
+    with st.expander(f"</> {t(COMMON, 'code')}", key=_caller_key("xcode")):
         st.code(code, language="python")
 
 
 def tech():
     """Collapsed section for content aimed at data scientists."""
-    return st.expander(f"🔬 {t(COMMON, 'tech')}")
+    return st.expander(f"🔬 {t(COMMON, 'tech')}", key=_caller_key("xtech"))
 
 
 # ── Data & artifacts ────────────────────────────────────────────────────────
