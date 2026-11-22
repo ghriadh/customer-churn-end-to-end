@@ -4,7 +4,7 @@ import streamlit as st
 
 from churn.prediction import predict
 from common import (
-    MODEL_NAMES, draw, finding, header, highlight, metrics, model, pct, require_artifacts, setup_page, show_code,
+    MODEL_NAMES, draw, finding, header, highlight, metric_name, metrics, model, pct, require_artifacts, setup_page, show_code,
 )
 from i18n import t
 
@@ -24,6 +24,16 @@ STRINGS = {
         "high": "**High risk**: the probability exceeds the decision threshold ({thr:.2f}). This customer would be flagged for the retention team.",
         "low": "**Low risk**: the probability is below the decision threshold ({thr:.2f}).",
         "all_models": "Probability given by each model", "probability": "Churn probability",
+        "choose_model": "Model used for the prediction", "selected_tag": " (selected model)",
+        "model_used": "Model used: preparation, hyperparameters and threshold",
+        "model_used_text": (
+            "The customer goes through the same pipeline as the training data: imputation, transformation, "
+            "encoding and scaling, then the model computes a probability, compared with the threshold."
+        ),
+        "step": "Step", "value": "Value", "imputer": "Missing values", "transform": "Numeric transformation",
+        "scaler": "Scaler", "imbalance": "Class imbalance", "params": "Hyperparameters", "threshold": "Decision threshold",
+        "cv_score": "Cross-validation score ({metric})",
+        "trees_note": "Tree-based model: the scaler has no effect on its predictions.",
         "threshold_note": "Black tick: decision threshold of each model · dashed line: overall churn rate ({rate}).",
     },
     "fr": {
@@ -38,6 +48,16 @@ STRINGS = {
         "high": "**Risque élevé** : la probabilité dépasse le seuil de décision ({thr:.2f}). Ce client serait signalé à l'équipe de fidélisation.",
         "low": "**Risque faible** : la probabilité est inférieure au seuil de décision ({thr:.2f}).",
         "all_models": "Probabilité donnée par chaque modèle", "probability": "Probabilité de churn",
+        "choose_model": "Modèle utilisé pour la prédiction", "selected_tag": " (modèle retenu)",
+        "model_used": "Modèle utilisé : préparation, hyperparamètres et seuil",
+        "model_used_text": (
+            "Le client passe par le même pipeline que les données d'entraînement : imputation, transformation, "
+            "encodage et mise à l'échelle, puis le modèle calcule une probabilité, comparée au seuil."
+        ),
+        "step": "Étape", "value": "Valeur", "imputer": "Valeurs manquantes", "transform": "Transformation numérique",
+        "scaler": "Scaler", "imbalance": "Déséquilibre des classes", "params": "Hyperparamètres", "threshold": "Seuil de décision",
+        "cv_score": "Score en validation croisée ({metric})",
+        "trees_note": "Modèle à base d'arbres : le scaler n'a aucun effet sur ses prédictions.",
         "threshold_note": "Trait noir : seuil de décision de chaque modèle · ligne pointillée : taux de churn global ({rate}).",
     },
 }
@@ -83,8 +103,10 @@ st.divider()
 names = list(m["models"])
 results = pd.DataFrame([{"name": n, "model": MODEL_NAMES[n], "probability": predict([customer], model(n)).iloc[0]["churn_probability"],
                          "threshold": m["models"][n]["threshold"]} for n in names])
-sel = m["selected_model"]
+sel = st.selectbox(t(STRINGS, "choose_model"), names, index=names.index(m["selected_model"]),
+                   format_func=lambda n: MODEL_NAMES[n] + (t(STRINGS, "selected_tag") if n == m["selected_model"] else ""))
 row = results.set_index("name").loc[sel]
+info = m["models"][sel]
 
 left, right = st.columns([1, 1.5], gap="large")
 with left:
@@ -103,6 +125,19 @@ with right:
     labels = bars.mark_text(align="left", dx=6, color="#0b0b0b").encode(text=alt.Text("probability:Q", format=".0%"))
     draw(bars + ticks + rule + labels, 200)
     st.caption(t(STRINGS, "threshold_note", rate=pct(m["churn_rate"])))
+
+with st.expander(t(STRINGS, "model_used")):
+    st.markdown(t(STRINGS, "model_used_text"))
+    cfg = info["config"]
+    st.dataframe(pd.DataFrame({
+        t(STRINGS, "step"): [t(STRINGS, k) for k in ("imputer", "transform", "scaler", "imbalance", "params", "threshold")]
+                            + [t(STRINGS, "cv_score", metric=metric_name(m["selection_metric"]))],
+        t(STRINGS, "value"): [cfg["imputer"], cfg["transform"], cfg["scaler"], cfg["imbalance"],
+                              ", ".join(f"{k.split('__')[-1]}={v}" for k, v in info["params"].items()),
+                              f"{info['threshold']:.2f}", f"{info['cv_score']:.3f}"],
+    }), hide_index=True)
+    if sel in ("random_forest", "hist_gradient_boosting", "adaboost"):
+        st.caption(t(STRINGS, "trees_note"))
 
 show_code("from churn.prediction import load_model, predict\n\n"
           f"model = load_model('{sel}')\npredict([customer], model)   # -> churn_probability, churn")
