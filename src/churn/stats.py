@@ -1,4 +1,4 @@
-"""Statistical tests used in the exploration page."""
+"""Statistical tests used in the exploration (app and notebook)."""
 import numpy as np
 import pandas as pd
 from scipy import stats

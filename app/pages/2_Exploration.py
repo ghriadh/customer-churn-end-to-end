@@ -8,7 +8,7 @@ from common import (
     setup_page, show_code, tech,
 )
 from i18n import get_lang, t
-from stats import association, correlation, cramer_ranking, normality, qq_points
+from churn.stats import association, correlation, cramer_ranking, normality, qq_points
 
 setup_page()
 
