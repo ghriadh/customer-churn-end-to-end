@@ -22,3 +22,6 @@ mlruns/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Personal notebooks and tools (interview copy), kept out of the repository
+notebooks/local/
