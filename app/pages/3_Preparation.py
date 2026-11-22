@@ -247,10 +247,13 @@ show_code("from imblearn.pipeline import Pipeline   # resamples during fit only\
 step(7, t(STRINGS, "s7"))
 st.markdown(t(STRINGS, "s7_text"))
 # Rendered in an iframe: the scikit-learn diagram needs its own CSS and JavaScript (content generated locally)
-# Full width and tall enough for the diagram, so no scroll bar appears.
+# Key figure: enlarged (zoom), centred, no horizontal scroll bar; vertical scroll only if blocks are unfolded.
 diagram = estimator_html_repr(build_pipeline(model="logistic_regression", imputer="group_median",
                                              transform="log", scaler="robust", imbalance="smote"))
-st.iframe("<style>body { margin: 0; }</style>" + diagram, height=560)
+zoom_css = ("<style>html, body { margin: 0; overflow-x: hidden; }"
+            "body { display: flex; justify-content: center; padding-top: 6px; }"
+            ".sk-top-container { zoom: 1.6; }</style>")
+st.iframe(zoom_css + diagram, height=590)
 show_code("pipeline = build_pipeline(model='logistic_regression', imputer='group_median',\n"
           "                          transform='log', scaler='robust', imbalance='smote')\n"
           "pipeline.fit(X_train, y_train)")

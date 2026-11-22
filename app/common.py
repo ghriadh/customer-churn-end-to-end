@@ -134,13 +134,13 @@ h2, h3 { color: #0d366b !important; }
 [data-testid="stCheckbox"] p { font-weight: 600; color: #0d366b; }
 [data-testid="stCheckbox"]:not([data-selected]) > div > div:first-child { background-color: #a9b8cc !important; }
 /* Select boxes (Streamlit 1.67 react-aria combobox): tinted, bordered, value in bold, blue chevron */
-[data-testid="stSelectbox"] div:has(> input) { border: 1.5px solid #6da7ec !important; background: #eef5fe !important;
+[data-testid="stSelectbox"] div:has(> input) { border: 1.5px solid #6da7ec !important; background: #ffffff !important;
     border-radius: 10px !important; box-shadow: 0 1px 4px rgba(42, 120, 214, .15); transition: box-shadow .15s, border-color .15s; }
 [data-testid="stSelectbox"] div:has(> input):hover { border-color: #2a78d6 !important; box-shadow: 0 3px 10px rgba(42, 120, 214, .28); }
 [data-testid="stSelectbox"] input { background: transparent !important; font-weight: 650 !important; font-size: 1.04rem !important;
     color: #0d366b !important; -webkit-text-fill-color: #0d366b; cursor: pointer; }
 [data-testid="stSelectbox"] div:has(> input) svg { color: #2a78d6 !important; fill: #2a78d6; }
-[data-testid="stNumberInput"] input { background: #eef5fe; font-weight: 600; }
+[data-testid="stNumberInput"] input { background: #ffffff; font-weight: 600; }
 .stButton > button, [data-testid="stFormSubmitButton"] > button { background: #2a78d6; color: #fff; border: none;
     font-weight: 650; padding: .55rem 1.4rem; border-radius: 10px; box-shadow: 0 2px 6px rgba(42, 120, 214, .35); }
 .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover { background: #1c5cab; color: #fff; }
