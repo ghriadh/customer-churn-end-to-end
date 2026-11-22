@@ -2,6 +2,8 @@
 
 # Customer Churn — which customers are about to leave?
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://customer-churn-ghriadh.streamlit.app/) **Live app:** https://customer-churn-ghriadh.streamlit.app/
+
 A telecom operator loses about one customer in four. This project predicts which customers are likely to cancel
 their subscription, so that a retention team can contact them before they leave. It covers the whole workflow:
 exploration, a leak-free preprocessing pipeline, a fair comparison of preparation methods and models, threshold

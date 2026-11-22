@@ -2,6 +2,8 @@
 
 # Churn client — quels clients sont sur le point de partir ?
 
+[![Ouvrir dans Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://customer-churn-ghriadh.streamlit.app/) **Application en ligne :** https://customer-churn-ghriadh.streamlit.app/
+
 Un opérateur télécom perd environ un client sur quatre. Ce projet prédit quels clients risquent de résilier leur
 abonnement, pour qu'une équipe de fidélisation puisse les contacter avant leur départ. Il couvre toute la démarche :
 exploration, pipeline de préparation sans fuite de données, comparaison équitable des méthodes de préparation et des
