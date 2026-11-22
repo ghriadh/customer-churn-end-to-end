@@ -133,10 +133,13 @@ h2, h3 { color: #0d366b !important; }
 /* Toggles and checkboxes: bold label, darker track when off */
 [data-testid="stCheckbox"] p { font-weight: 600; color: #0d366b; }
 [data-testid="stCheckbox"]:not([data-selected]) > div > div:first-child { background-color: #a9b8cc !important; }
-/* Select boxes: tinted, bordered, value in bold */
-[data-baseweb="select"] > div { border: 1.5px solid #6da7ec !important; background: #eef5fe !important; border-radius: 10px !important; }
-[data-baseweb="select"] > div * { font-weight: 650; color: #0d366b; }
-[data-baseweb="select"] > div { font-size: 1.04rem; }
+/* Select boxes (Streamlit 1.67 react-aria combobox): tinted, bordered, value in bold, blue chevron */
+[data-testid="stSelectbox"] div:has(> input) { border: 1.5px solid #6da7ec !important; background: #eef5fe !important;
+    border-radius: 10px !important; box-shadow: 0 1px 4px rgba(42, 120, 214, .15); transition: box-shadow .15s, border-color .15s; }
+[data-testid="stSelectbox"] div:has(> input):hover { border-color: #2a78d6 !important; box-shadow: 0 3px 10px rgba(42, 120, 214, .28); }
+[data-testid="stSelectbox"] input { background: transparent !important; font-weight: 650 !important; font-size: 1.04rem !important;
+    color: #0d366b !important; -webkit-text-fill-color: #0d366b; cursor: pointer; }
+[data-testid="stSelectbox"] div:has(> input) svg { color: #2a78d6 !important; fill: #2a78d6; }
 [data-testid="stNumberInput"] input { background: #eef5fe; font-weight: 600; }
 .stButton > button, [data-testid="stFormSubmitButton"] > button { background: #2a78d6; color: #fff; border: none;
     font-weight: 650; padding: .55rem 1.4rem; border-radius: 10px; box-shadow: 0 2px 6px rgba(42, 120, 214, .35); }
@@ -176,6 +179,7 @@ h2, h3 { color: #0d366b !important; }
 [data-testid="stHorizontalBlock"]:has(.sticky-anchor) { align-items: flex-start; }
 [data-testid="stColumn"]:has(.sticky-anchor) { position: sticky; top: 3.5rem; }
 
+[data-testid="stCaptionContainer"] { opacity: 1 !important; }
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p { font-size: .95rem !important; color: #3d3d3a !important; }
 section[data-testid="stSidebar"] { background: linear-gradient(180deg, #eef4fd 0%, #f4f1ff 100%); }
 </style>
