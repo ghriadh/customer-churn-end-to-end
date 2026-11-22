@@ -252,7 +252,8 @@ diagram = estimator_html_repr(build_pipeline(model="logistic_regression", impute
                                              transform="log", scaler="robust", imbalance="smote"))
 zoom_css = ("<style>html, body { margin: 0; overflow-x: hidden; }"
             "body { display: flex; justify-content: center; padding-top: 6px; }"
-            ".sk-top-container { zoom: 1.6; }</style>")
+            ".sk-top-container { zoom: 1.6; }"
+            "[id^='sk-container-id'], .sk-container { overflow: visible !important; }</style>")
 st.iframe(zoom_css + diagram, height=590)
 show_code("pipeline = build_pipeline(model='logistic_regression', imputer='group_median',\n"
           "                          transform='log', scaler='robust', imbalance='smote')\n"
