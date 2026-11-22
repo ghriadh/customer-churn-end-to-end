@@ -135,13 +135,9 @@ show_code("df.info()\ndf.describe().T\ndf.describe(include='str').T")
 # ── customerID ──────────────────────────────────────────────────────────────
 st.subheader(t(STRINGS, "id_title"))
 finding(t(STRINGS, "id_comment", n_unique=df["customerID"].nunique(), n_rows=len(df)))
-show_code("df['customerID'].nunique() == len(df)   # True: one ID per row
-"
-          "df = df.drop(columns='customerID')
-"
-          "
-# In the pipeline (src/churn/data.py, clean_data)
-"
+show_code("df['customerID'].nunique() == len(df)   # True: one ID per row\n"
+          "df = df.drop(columns='customerID')\n"
+          "\n# In the pipeline (src/churn/data.py, clean_data)\n"
           "df = df.drop(columns=ID_COL)")
 
 # ── TotalCharges ────────────────────────────────────────────────────────────
