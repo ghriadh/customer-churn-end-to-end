@@ -1,6 +1,7 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.utils import estimator_html_repr
@@ -221,8 +222,10 @@ show_code("from imblearn.pipeline import Pipeline   # resamples during fit only\
 # ── 7. Full pipeline ────────────────────────────────────────────────────────
 st.subheader(t(STRINGS, "s7"))
 st.markdown(t(STRINGS, "s7_text"))
-st.html(estimator_html_repr(build_pipeline(model="logistic_regression", imputer="group_median",
-                                           transform="log", scaler="robust", imbalance="smote")))
+# Rendered in an isolated frame: the scikit-learn diagram needs its own CSS and JavaScript
+components.html(estimator_html_repr(build_pipeline(model="logistic_regression", imputer="group_median",
+                                                   transform="log", scaler="robust", imbalance="smote")),
+                height=420, scrolling=True)
 show_code("pipeline = build_pipeline(model='logistic_regression', imputer='group_median',\n"
           "                          transform='log', scaler='robust', imbalance='smote')\n"
           "pipeline.fit(X_train, y_train)")
