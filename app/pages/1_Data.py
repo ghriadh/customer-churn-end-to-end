@@ -30,6 +30,12 @@ STRINGS = {
             "- `TotalCharges` should be numeric but is read as text: some values cannot be converted (see below)."
         ),
         "describe_num": "Numeric columns", "describe_cat": "Text columns",
+        "id_title": "Dropping `customerID`",
+        "id_comment": (
+            "`customerID` takes **{n_unique:,} different values for {n_rows:,} rows**: it is a unique identifier. "
+            "It says nothing about the customer's behaviour, and a model could only learn it by heart, so it is "
+            "**dropped** before modelling."
+        ),
         "tc_title": "Cleaning `TotalCharges`",
         "tc_comment": (
             "Converting `TotalCharges` to a number fails because **{n} values are a blank space** (`' '`). "
@@ -71,6 +77,12 @@ STRINGS = {
             "- `TotalCharges` devrait être numérique mais elle est lue comme du texte : certaines valeurs ne se convertissent pas (voir ci-dessous)."
         ),
         "describe_num": "Colonnes numériques", "describe_cat": "Colonnes texte",
+        "id_title": "Suppression de `customerID`",
+        "id_comment": (
+            "`customerID` prend **{n_unique:,} valeurs différentes pour {n_rows:,} lignes** : c'est un identifiant "
+            "unique. Il ne dit rien du comportement du client, et un modèle ne pourrait que l'apprendre par cœur : "
+            "il est donc **supprimé** avant la modélisation."
+        ),
         "tc_title": "Nettoyage de `TotalCharges`",
         "tc_comment": (
             "La conversion de `TotalCharges` en nombre échoue car **{n} valeurs sont un espace** (`' '`). "
@@ -119,6 +131,18 @@ c1.dataframe(df.describe().round(2).T)
 c2.markdown(f"**{t(STRINGS, 'describe_cat')}**")
 c2.dataframe(df.drop(columns="customerID").describe(include="str").T)
 show_code("df.info()\ndf.describe().T\ndf.describe(include='str').T")
+
+# ── customerID ──────────────────────────────────────────────────────────────
+st.subheader(t(STRINGS, "id_title"))
+finding(t(STRINGS, "id_comment", n_unique=df["customerID"].nunique(), n_rows=len(df)))
+show_code("df['customerID'].nunique() == len(df)   # True: one ID per row
+"
+          "df = df.drop(columns='customerID')
+"
+          "
+# In the pipeline (src/churn/data.py, clean_data)
+"
+          "df = df.drop(columns=ID_COL)")
 
 # ── TotalCharges ────────────────────────────────────────────────────────────
 st.subheader(t(STRINGS, "tc_title"))
